@@ -1,4 +1,4 @@
-﻿#region Using Statements
+#region Using Statements
 using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
@@ -13,43 +13,44 @@ using System.IO;
 
 namespace TestGame
 {
+    // MileStone 2
+
+    // Electric Tuna
+    // Justin John
+    // Monica Ambrose
+    // Zachary Wilken
+
+
+    // Currently Movement is controlled by A(Left) and D(Right) and Jump(Space)
+    // Will change movement to be controlled by a gamepad in next milestone
+
+
+
     /// <summary>
     /// This is the main type for your game
     /// </summary>
     public class Game1 : Game
     {
         GraphicsDeviceManager graphics;
-        SpriteBatch spriteBatch;
-
-        //Character chrctr = new Character();
-
-
+        SpriteBatch spriteBatch;      
         Random rgen = new Random();
 
+        ScreenManager screenManager;
+        GameScreen[] otherScreens;
 
-        // will hold sprite position (The texture is now held by the Player class instead)
-        public Rectangle place;
-        public Rectangle place2;
-        public Rectangle place3;
-        public Rectangle place4;
+        // will hold Texture2D sprite and position
+        List<Character> characters = new List<Character>();
+        Character char1;
+        Character char2;
+        Character char3;
+        Character char4;
+
+        Rectangle startPlace;
 
         KeyboardState kState;
 
         Texture2D guffin;
         Rectangle guffinPlace;
-        Rectangle guffinPlace2;
-
-        // attributes for jumping
-        bool jumping = false;
-        // holds current Y position
-        int startY; 
-        // will be used to act as 'gravity'
-        int jumpSpeed;
-
-        // for collision
-        // attributes to store Y cords in 
-        int playerY1;
-        int playerY2;
 
         // Players & respective interfaces
         Player player1;
@@ -60,7 +61,8 @@ namespace TestGame
         UserInterface user3;
         Player player4;
         UserInterface user4;
-        
+
+
         // Textures, sprites, etc.
         Texture2D baton;
         Texture2D block;
@@ -70,189 +72,63 @@ namespace TestGame
         // list of wall blocks
         List<Rectangle> walls = new List<Rectangle>();
 
-
         public bool guffinOn1 = false;
         bool guffinOn2 = false;
-
-        /// <summary>
-        /// Method to spawn new getCrystals. Uses a randomized switch case to put the crystal at one of the spawn points.
-        /// Once the map editor is functional, the spawn points should be changeable
-        /// </summary>
-        public void SpawnCrystal()
-        {
-            Random rgen = new Random();
-            switch (rgen.Next(5) + 1)
-            {
-                case 1:
-                    getCrystal = new Rectangle(100, 50, 11, 18);
-                    return;
-                case 2:
-                    getCrystal = new Rectangle(700, 50, 11, 18);
-                    return;
-                case 3:
-                    getCrystal = new Rectangle(400, 250, 11, 18);
-                    return;
-                case 4:
-                    getCrystal = new Rectangle(100, 400, 11, 18);
-                    return;
-                case 5:
-                    getCrystal = new Rectangle(700, 400, 11, 18);
-                    return;
-            }
-        }
-
 
         public Game1()
             : base()
         {
+            screenManager = new ScreenManager(this);
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
+
+            Random rgen = new Random();
+
+        
         }
 
-        /*
-        //this method will be called in initialize, will take a map name as a parameter and load a list of coordinates into the Walls collection
-        public void ReadMap(string mapFile)
+        public void ReadMap(string map)
         {
             StreamReader input = null;
+            String line = "";
 
+            input = new StreamReader(map);
 
-            string mapText = "";
-
-
-                input = new StreamReader(mapFile);
-
-
-                int numLines = File.ReadAllLines(mapFile).Length;
-                if (numLines >= 2)
-                {
-                    string line = input.ReadLine();
-                    char first = line[0];
-
-                    if (first == 'W')
-                    {
-                        while (first == 'W')
-                        {
-                            // populate the list of walls
-                            //change for loop so that it will not continue for the rest of the doc
-                            for (int i = 0; i < File.ReadAllLines(mapFile).Length; i++)
-                            {
-                                //split the read line by commas - should be 3 values - 1st is indicator, 2nd is X coordinate, 3rd is Y coordinate
-                                string[] splitLine = line.Split(',');
-
-                                //parse the coordinate values into ints
-                                int wallXco;
-                                int.TryParse(splitLine[1], out wallXco);
-                                int wallYco;
-                                int.TryParse(splitLine[2], out wallYco);
-
-                                //make a new rectangle based on what was read and add it into the collection of walls
-                                walls.Add(new Rectangle(wallXco, wallYco, 20, 20));
-                            }//for
-                        }//while
-                    }//if
-
-                    //to be worked on later - spawnpoints and traps will be added in the future
-                        /*
-                    else if (first == 'T')
-                    {
-                        while (first == 'T')
-                        {
-                            //create trap
-                        }
-                    }
-                    else if (first == 'S')
-                    {
-                        while (first == 'S')
-                        {
-                            //create spawn point
-                        }
-                    }//if loops
-                         */
-                //}//if
-        //}
-
-
-
-        // to be called in Update method and contains movement & jumping
-        public void Move()
-        {
-            kState = Keyboard.GetState();
-
-            if (kState.IsKeyDown(Keys.A)) place.X -= 6;
-            if (kState.IsKeyDown(Keys.D)) place.X += 6;
-
-            // jumping 
-            if (jumping)
+            // read the rest of the information as walls
+            while ((line = input.ReadLine()) != null)
             {
-                place.Y += jumpSpeed;
-                jumpSpeed += 1;
-
-
-               /* if (place.Y >= startY)
-                {
-                    place.Y = startY;
-                    jumping = false;
-                }*/
-
-                playerY1 = jumpSpeed;
-
-                if (place.Intersects(guffinPlace2))
-                {
-                    jumpSpeed = 0;
-                    jumping = false;
-                }
-                else
-                {
-                    jumpSpeed = playerY1;
-                }
+                CreateWall(line);
             }
-            else
-            {
-
-                if (kState.IsKeyDown(Keys.Space))
-                {
-                    jumping = true;
-                    jumpSpeed = -20;
-                }
-            }
-
-
-            /*
-            if (jumping)
-            {
-                place.Y += jumpSpeed;
-                jumpSpeed += 1;
-                if (place.Y >= startY)
-                {
-                    place.Y = startY;
-                    jumping = false;
-                }
-            }
-            else
-            {
-
-                if (kState.IsKeyDown(Keys.Space))
-                {
-                    jumping = true;
-                    jumpSpeed = -14;
-                }
-            }
-
-            */
-
         }
 
+        // place the walls from a map file
+        public void CreateWall(string str)
+        {
+            // create an array of the sunstrings
+            String[] wallInfo = str.Split(',');
+           // check if the line has the required number of properties
 
-        // will be put in Update Method
-        // Will add Macguffins to the board
+            try
+            {
+                int wallX = int.Parse(wallInfo[1]);
+                int wallY = int.Parse(wallInfo[2]);
+
+                // create a new wall based on those ints, and add it to the list
+                walls.Add(new Rectangle(wallX,wallY,20,20));
+            }
+            catch (FormatException fe)
+            {
+                // if the wall information is incorrect... do nothing.
+            }
+        }
 
         // THIS IS BY FAR NOT THE BEST WAY TO DO THIS
-        // IT DOESNT EVEN CANGE THE PLACE
+        // IT DOESNT EVEN CHANGE THE PLACE
         public void AddGuffin()
         {
             if (guffinOn1 == false)
             {
-                guffinPlace = new Rectangle(rgen.Next(1,700),rgen.Next(200,300),11,18);
+                guffinPlace = new Rectangle(rgen.Next(1, 700), rgen.Next(200, 300), 11, 18);
                 guffinOn1 = true;
             }
         }
@@ -265,44 +141,40 @@ namespace TestGame
         /// </summary>
         protected override void Initialize()
         {
-            // TODO: Add your initialization logic here
-            place = new Rectangle(400, 300, 28, 62);
-            guffinPlace2 = new Rectangle(600, 300, 11, 18);
+            // TODO: Add your initialization logic here           
+            screenManager.AddScreen(new MainMenuScreen("Menu"), PlayerIndex.One);
+            screenManager.Initialize();
+            otherScreens = screenManager.GetScreens();
 
-            // set guffin location equal to players y
-            //guffinPlace = new Rectangle(450, 300, 50, 50);
+            startPlace = new Rectangle(400, 300, 28, 62);
 
-
-            // initialize Jumping attributes
-            startY = place.Y;
-            jumpSpeed = 0;
-            
-            // player loading - for this logic, they just sort of move together in a conga line
-            // until the seperate controls are 
             player1 = new Player(1, Color.Red);
             user1 = new UserInterface(player1);
-            place = new Rectangle(400, 300, 28, 62);
+            char1 = new Character(player1);
+            char1.Place = new Rectangle(400, 300, 28, 62);
 
             player2 = new Player(2, Color.Blue);
             user2 = new UserInterface(player2);
-            place2 = new Rectangle(475, 300, 28, 62);
+            char2 = new Character(player2);
+            char2.Place = new Rectangle(475, 300, 28, 62);
 
             player3 = new Player(3, Color.Green);
             user3 = new UserInterface(player3);
-            place3 = new Rectangle(550, 300, 28, 62);
+            char3 = new Character(player3);
+            char3.Place = new Rectangle(550, 300, 28, 62);
 
             player4 = new Player(4, Color.Yellow);
             user4 = new UserInterface(player4);
-            place4 = new Rectangle(625, 300, 28, 62);
+            char4 = new Character(player4);
+            char4.Place = new Rectangle(625, 300, 28, 62);
 
-            //ReadMap("map1.txt");
-            /* should be unneccessary with the ReadMap Method
-            // populate the list of walls (just an example floor for now)
-            for (int i = 0; i < 20; i++)
-            {
-                walls.Add(new Rectangle(200 + i * 20, 375, 20, 20));
-            }
-            */
+            characters.Add(char1);
+            characters.Add(char2);
+            characters.Add(char3);
+            characters.Add(char4);
+
+            // read the map
+            ReadMap("map1.txt");
             base.Initialize();
         }
 
@@ -312,12 +184,12 @@ namespace TestGame
         /// </summary>
         protected override void LoadContent()
         {
-            // Create a new SpriteBatch, which can be used to draw textures.
+            // TODO: use this.Content to load your game content here
             spriteBatch = new SpriteBatch(GraphicsDevice);
+
             baton = Content.Load<Texture2D>("baton");
             block = Content.Load<Texture2D>("block1");
-            P1.Character = Content.Load<Texture2D>("player1");
-            text = Content.Load<SpriteFont>("Arial");   
+            text = Content.Load<SpriteFont>("Arial");
 
             player1.Sprite = Content.Load<Texture2D>("player1");
             player2.Sprite = Content.Load<Texture2D>("player1");
@@ -325,9 +197,6 @@ namespace TestGame
             player4.Sprite = Content.Load<Texture2D>("player1");
 
             guffin = Content.Load<Texture2D>("crystal");
-            
-
-            // TODO: use this.Content to load your game content here
         }
 
         /// <summary>
@@ -346,61 +215,48 @@ namespace TestGame
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Update(GameTime gameTime)
         {
-            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
-                Exit();
-
-
+            screenManager.Update(gameTime);
+            if (otherScreens[0].IsActive == true)
+            {
+                goto UpdateEnd;
+            }
+            // TODO: Add your update logic here
             kState = Keyboard.GetState();
-           
+
             // calls the move method that has left and right movement and jumping
-            Move();
+            char1.Move(walls);
+            char2.Move(walls);
+            char3.Move(walls);
+            char4.Move(walls);
             AddGuffin();
 
-            // detect whether the character has intersected a getCrystal
-            if (place.Intersects(guffinPlace))
-            {
-                player1.MacGuffinCount++;
-                guffinPlace.Location.Equals(null); 
-                guffinOn1 = false;
-            }
-            if (place2.Intersects(guffinPlace))
-            {
-                player2.MacGuffinCount++;
-                guffinPlace.Location.Equals(null);
-                guffinOn1 = false;
-            }
-            if (place3.Intersects(guffinPlace))
-            {
-                player3.MacGuffinCount++;
-                guffinPlace.Location.Equals(null);
-                guffinOn1 = false;
-            }
-            if (place4.Intersects(guffinPlace))
-            {
-                player4.MacGuffinCount++;
-                guffinPlace.Location.Equals(null);
-                guffinOn1 = false;
-            }
-
             // update the baton timer, if necessary (doesn't do anything for now)
-            if (P1.StunCharge < 100)
+            if (user1.StunCharge < 100)
             {
-                P1.ChargeStun();
+                user1.ChargeStun();
             }
-            
-            // TEMPORARY TESTING MEASURES - players 2-4 move with player 1 
-            // (change this once separate controls)
-            place2.X = place.X + 30;
-            place2.Y = place.Y;
 
-            place3.X = place.X + 60;
-            place3.Y = place.Y;
 
-            place4.X = place.X + 90;
-            place4.Y = place.Y;
+            // collision with jumping doesnt work
+            foreach (Character chr in characters)
+            {
+                if (chr.Place.Intersects(guffinPlace))
+                {
+                    chr.Player.MacGuffinCount++;
+                    guffinPlace.Location.Equals(null);
+                    guffinOn1 = false;
+                }
+            }
 
-            // TODO: Add your update logic here
+            foreach (Character chr in characters)
+            {
+                if (chr.Place.Y > GraphicsDevice.Viewport.Height + 500)
+                {
+                    chr.Place = startPlace;
+                }
+            }
 
+            UpdateEnd:
             base.Update(gameTime);
         }
 
@@ -410,37 +266,45 @@ namespace TestGame
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(Color.CornflowerBlue);
-
-            // TODO: Add your drawing code here
-
-            spriteBatch.Begin();
-            spriteBatch.Draw(ship, place, Color.White);
-            spriteBatch.Draw(guffin, guffinPlace, Color.White);
-            spriteBatch.Draw(guffin, guffinPlace2, Color.White);
             
+            
+            spriteBatch.Begin();
+
+            if (otherScreens[0].IsActive == true)
+            {
+                otherScreens[0].Draw(gameTime);
+                goto DrawEnd;
+            }
+
+            GraphicsDevice.Clear(Color.LightSteelBlue);
+            spriteBatch.Draw(guffin, guffinPlace, Color.White);
+
             // make a bunch of blocks
             foreach (Rectangle wall in walls)
             {
                 spriteBatch.Draw(block, wall, Color.White);
             }
 
-            // Draw the players
-            spriteBatch.Draw(player1.Sprite, place, Color.White);
-            spriteBatch.Draw(player2.Sprite, place2, player2.PlayerColor);
-            spriteBatch.Draw(player3.Sprite, place3, player3.PlayerColor);
-            spriteBatch.Draw(player4.Sprite, place4, player4.PlayerColor);
-            
+            /// <summary>
+            /// Draw the players
+            /// Right now, they all use player1's place (just for test purpose)
+            /// </summary>
+            spriteBatch.Draw(player1.Sprite, char1.Place, Color.White);
+            spriteBatch.Draw(player2.Sprite, char2.Place, player2.PlayerColor);
+            spriteBatch.Draw(player3.Sprite, char3.Place, player3.PlayerColor);
+            spriteBatch.Draw(player4.Sprite, char4.Place, player4.PlayerColor);
+
             /// <summary>
             /// Display for P1 - P4
+            /// Right now, they all use P1's values for test purposes
             /// </summary>
             user1.Draw(spriteBatch, guffin, baton, text);
             user2.Draw(spriteBatch, guffin, baton, text);
             user3.Draw(spriteBatch, guffin, baton, text);
             user4.Draw(spriteBatch, guffin, baton, text);
-
+            
+            DrawEnd:
             spriteBatch.End();
-
             base.Draw(gameTime);
         }
     }
